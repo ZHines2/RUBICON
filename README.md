@@ -11,7 +11,7 @@ graphics inspired by a t3ssl8tr-style presentation.
 Because the prototype is dependency-free, you can serve it with any static file server. For example:
 
 ```bash
-cd /home/runner/work/RUBICON/RUBICON
+cd RUBICON
 python3 -m http.server 8000
 ```
 
