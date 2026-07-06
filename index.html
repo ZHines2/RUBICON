@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RUBICON | Isometric KABBA Simulator</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050816;
+      --panel: rgba(9, 16, 36, 0.88);
+      --edge: #84f0ff;
+      --accent: #ffb347;
+      --text: #f7fbff;
+      --muted: #9eb7d9;
+      --danger: #ff6b7d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(82, 196, 255, 0.16), transparent 40%),
+        linear-gradient(180deg, #08112a 0%, var(--bg) 70%);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .shell {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 2px solid rgba(132, 240, 255, 0.45);
+      border-radius: 18px;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 18px 40px rgba(0, 0, 0, 0.34),
+        0 0 40px rgba(132, 240, 255, 0.08);
+      backdrop-filter: blur(12px);
+    }
+
+    .sidebar {
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.85rem;
+      line-height: 1.1;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .tagline {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .control-group {
+      margin-bottom: 20px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(132, 240, 255, 0.2);
+      border-radius: 14px;
+    }
+
+    .control-group h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--edge);
+    }
+
+    .stats {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .stats div {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .stats strong {
+      color: var(--text);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      color: #04101d;
+      background: linear-gradient(180deg, #9af6ff 0%, #6fdaec 100%);
+      box-shadow: 0 10px 16px rgba(111, 218, 236, 0.16);
+    }
+
+    button.secondary {
+      background: linear-gradient(180deg, #ffd08d 0%, #ffb347 100%);
+      box-shadow: 0 10px 16px rgba(255, 179, 71, 0.16);
+    }
+
+    button.danger {
+      background: linear-gradient(180deg, #ff93a1 0%, var(--danger) 100%);
+      box-shadow: 0 10px 16px rgba(255, 107, 125, 0.16);
+    }
+
+    .hint-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .stage {
+      position: relative;
+      padding: 18px;
+    }
+
+    .stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(transparent 0, rgba(255, 255, 255, 0.02) 50%, transparent 100%);
+      background-size: 100% 6px;
+      mix-blend-mode: screen;
+      opacity: 0.55;
+      border-radius: 18px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at top, rgba(255, 179, 71, 0.08), transparent 38%),
+        linear-gradient(180deg, #0b1732 0%, #081125 100%);
+      border: 1px solid rgba(132, 240, 255, 0.18);
+      image-rendering: pixelated;
+      cursor: pointer;
+    }
+
+    .footer {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: right;
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel sidebar">
+      <h1>RUBICON KABBA</h1>
+      <p class="tagline">
+        Build an isometric KABBA field, pulse it like a mechanics blueprint sandbox, and shape neon
+        towers with chunky t3ssl8tr-inspired graphics.
+      </p>
+
+      <section class="control-group">
+        <h2>Simulation</h2>
+        <div class="stats">
+          <div><span>Mode</span><strong id="modeLabel">Pulse</strong></div>
+          <div><span>Selected</span><strong id="selectedLabel">—</strong></div>
+          <div><span>Tower Height</span><strong id="heightLabel">0</strong></div>
+          <div><span>Wave Energy</span><strong id="energyLabel">0%</strong></div>
+        </div>
+      </section>
+
+      <section class="control-group">
+        <h2>Controls</h2>
+        <div class="buttons">
+          <button type="button" id="raiseButton">Raise</button>
+          <button type="button" id="lowerButton" class="secondary">Lower</button>
+          <button type="button" id="toggleButton">Pause</button>
+          <button type="button" id="resetButton" class="danger">Reset</button>
+        </div>
+      </section>
+
+      <section class="control-group">
+        <h2>How to Play</h2>
+        <ul class="hint-list">
+          <li>Click a tile to select it.</li>
+          <li>Click again or use <strong>Raise</strong> to grow a KABBA stack.</li>
+          <li>Shift-click, right-click, or use <strong>Lower</strong> to trim a stack.</li>
+          <li>Pause the pulse to examine the blueprint silhouette.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section class="panel stage">
+      <canvas id="simulator" width="820" height="620" aria-label="Isometric KABBA simulator"></canvas>
+      <div class="footer">Click to sculpt the field • Shift-click to remove • Space to pause/play</div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("simulator");
+    const ctx = canvas.getContext("2d");
+
+    const modeLabel = document.getElementById("modeLabel");
+    const selectedLabel = document.getElementById("selectedLabel");
+    const heightLabel = document.getElementById("heightLabel");
+    const energyLabel = document.getElementById("energyLabel");
+
+    const GRID_SIZE = 7;
+    const MAX_HEIGHT = 6;
+    const TILE_W = 72;
+    const TILE_H = 36;
+    const BLOCK_H = 22;
+    const ORIGIN_X = canvas.width / 2;
+    const ORIGIN_Y = 152;
+
+    const heights = Array.from({ length: GRID_SIZE }, (_, row) =>
+      Array.from({ length: GRID_SIZE }, (_, col) => (row === 3 && col === 3 ? 2 : 0)),
+    );
+
+    let selected = { row: 3, col: 3 };
+    let running = true;
+    let time = 0;
+
+    function isoToScreen(row, col, height = 0) {
+      return {
+        x: ORIGIN_X + (col - row) * (TILE_W / 2),
+        y: ORIGIN_Y + (col + row) * (TILE_H / 2) - height * BLOCK_H,
+      };
+    }
+
+    function clampHeight(value) {
+      return Math.max(0, Math.min(MAX_HEIGHT, value));
+    }
+
+    function getTileAtPoint(px, py) {
+      let best = null;
+
+      for (let row = 0; row < GRID_SIZE; row += 1) {
+        for (let col = 0; col < GRID_SIZE; col += 1) {
+          const { x, y } = isoToScreen(row, col, heights[row][col]);
+          const dx = Math.abs(px - x);
+          const dy = Math.abs(py - (y - TILE_H / 2));
+          if (dx / (TILE_W / 2) + dy / (TILE_H / 2) <= 1) {
+            if (!best || row + col > best.depth) {
+              best = { row, col, depth: row + col };
+            }
+          }
+        }
+      }
+
+      return best;
+    }
+
+    function waveEnergy(row, col) {
+      const distance = Math.hypot(row - 3, col - 3);
+      return (Math.sin(time * 0.045 - distance * 0.9) + 1) / 2;
+    }
+
+    function drawDiamond(x, y, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + TILE_W / 2, y + TILE_H / 2);
+      ctx.lineTo(x, y + TILE_H);
+      ctx.lineTo(x - TILE_W / 2, y + TILE_H / 2);
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function drawBlock(row, col, level, energy, isSelected) {
+      const screen = isoToScreen(row, col, level);
+      const top = {
+        x: screen.x,
+        y: screen.y - TILE_H / 2,
+      };
+      const glow = Math.round(energy * 75);
+      const topFill = `rgb(${42 + glow}, ${118 + glow}, ${156 + glow})`;
+      const leftFill = `rgb(${22 + glow}, ${66 + glow}, ${107 + glow})`;
+      const rightFill = `rgb(${30 + glow}, ${91 + glow}, ${138 + glow})`;
+      const edge = isSelected ? "#ffd784" : "#84f0ff";
+
+      ctx.beginPath();
+      ctx.moveTo(top.x, top.y + TILE_H);
+      ctx.lineTo(top.x - TILE_W / 2, top.y + TILE_H / 2);
+      ctx.lineTo(top.x - TILE_W / 2, top.y + TILE_H / 2 + BLOCK_H);
+      ctx.lineTo(top.x, top.y + TILE_H + BLOCK_H);
+      ctx.closePath();
+      ctx.fillStyle = leftFill;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(top.x, top.y + TILE_H);
+      ctx.lineTo(top.x + TILE_W / 2, top.y + TILE_H / 2);
+      ctx.lineTo(top.x + TILE_W / 2, top.y + TILE_H / 2 + BLOCK_H);
+      ctx.lineTo(top.x, top.y + TILE_H + BLOCK_H);
+      ctx.closePath();
+      ctx.fillStyle = rightFill;
+      ctx.fill();
+
+      drawDiamond(top.x, top.y, topFill, edge);
+
+      if (isSelected) {
+        ctx.strokeStyle = "rgba(255, 211, 127, 0.95)";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(top.x - 4, top.y + 8, 8, 8);
+      }
+    }
+
+    function drawGround(row, col, energy, isSelected) {
+      const { x, y } = isoToScreen(row, col);
+      const brightness = Math.round(energy * 55);
+      const fill = `rgb(${13 + brightness}, ${31 + brightness}, ${58 + brightness})`;
+      const stroke = isSelected ? "#ffd784" : "rgba(132, 240, 255, 0.55)";
+      drawDiamond(x, y - TILE_H / 2, fill, stroke);
+    }
+
+    function drawScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "rgba(255, 179, 71, 0.11)";
+      ctx.fillRect(0, 0, canvas.width, 96);
+
+      const tiles = [];
+      for (let row = 0; row < GRID_SIZE; row += 1) {
+        for (let col = 0; col < GRID_SIZE; col += 1) {
+          tiles.push({ row, col, height: heights[row][col], depth: row + col });
+        }
+      }
+      tiles.sort((a, b) => a.depth - b.depth);
+
+      for (const tile of tiles) {
+        const energy = waveEnergy(tile.row, tile.col);
+        const isSelected = tile.row === selected.row && tile.col === selected.col;
+        drawGround(tile.row, tile.col, energy, isSelected && tile.height === 0);
+
+        for (let level = tile.height - 1; level >= 0; level -= 1) {
+          drawBlock(tile.row, tile.col, level, energy, isSelected && level === tile.height - 1);
+        }
+      }
+    }
+
+    function updateReadout() {
+      const { row, col } = selected;
+      const energy = Math.round(waveEnergy(row, col) * 100);
+      modeLabel.textContent = running ? "Pulse" : "Paused";
+      selectedLabel.textContent = `${row + 1}, ${col + 1}`;
+      heightLabel.textContent = String(heights[row][col]);
+      energyLabel.textContent = `${energy}%`;
+    }
+
+    function raiseSelected() {
+      const { row, col } = selected;
+      heights[row][col] = clampHeight(heights[row][col] + 1);
+      updateReadout();
+      drawScene();
+    }
+
+    function lowerSelected() {
+      const { row, col } = selected;
+      heights[row][col] = clampHeight(heights[row][col] - 1);
+      updateReadout();
+      drawScene();
+    }
+
+    function resetField() {
+      for (let row = 0; row < GRID_SIZE; row += 1) {
+        for (let col = 0; col < GRID_SIZE; col += 1) {
+          heights[row][col] = row === 3 && col === 3 ? 2 : 0;
+        }
+      }
+      selected = { row: 3, col: 3 };
+      updateReadout();
+      drawScene();
+    }
+
+    canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+    canvas.addEventListener("mousedown", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const tile = getTileAtPoint((event.clientX - rect.left) * scaleX, (event.clientY - rect.top) * scaleY);
+
+      if (!tile) {
+        return;
+      }
+
+      const wasSelected = selected.row === tile.row && selected.col === tile.col;
+      selected = { row: tile.row, col: tile.col };
+
+      if (event.button === 2 || event.shiftKey) {
+        lowerSelected();
+      } else if (wasSelected) {
+        raiseSelected();
+      } else {
+        updateReadout();
+        drawScene();
+      }
+    });
+
+    document.getElementById("raiseButton").addEventListener("click", raiseSelected);
+    document.getElementById("lowerButton").addEventListener("click", lowerSelected);
+    document.getElementById("resetButton").addEventListener("click", resetField);
+    document.getElementById("toggleButton").addEventListener("click", () => {
+      running = !running;
+      document.getElementById("toggleButton").textContent = running ? "Pause" : "Resume";
+      updateReadout();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        running = !running;
+        document.getElementById("toggleButton").textContent = running ? "Pause" : "Resume";
+      } else if (event.key === "ArrowUp") {
+        raiseSelected();
+      } else if (event.key === "ArrowDown") {
+        lowerSelected();
+      }
+      updateReadout();
+    });
+
+    function animate() {
+      if (running) {
+        time += 1;
+      }
+      updateReadout();
+      drawScene();
+      requestAnimationFrame(animate);
+    }
+
+    updateReadout();
+    drawScene();
+    animate();
+  </script>
+</body>
+</html>
