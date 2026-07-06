@@ -244,8 +244,8 @@
     const TILE_W = 72;
     const TILE_H = 36;
     const BLOCK_H = 22;
-    const WAVE_SPEED = 0.045;
-    const WAVE_FREQUENCY = 0.9;
+    const WAVE_SPEED_PER_FRAME = 0.045;
+    const WAVE_FREQUENCY_PER_UNIT = 0.9;
     const ORIGIN_X = canvas.width / 2;
     const ORIGIN_Y = 152;
 
@@ -277,8 +277,8 @@
           const dx = Math.abs(px - x);
           const dy = Math.abs(py - (y - TILE_H / 2));
           if (dx / (TILE_W / 2) + dy / (TILE_H / 2) <= 1) {
-            if (!best || row + col > best.depth) {
-              best = { row, col, depth: row + col };
+            if (!best || row + col > best.renderOrder) {
+              best = { row, col, renderOrder: row + col };
             }
           }
         }
@@ -289,7 +289,7 @@
 
     function waveEnergy(row, col) {
       const distance = Math.hypot(row - 3, col - 3);
-      return (Math.sin(time * WAVE_SPEED - distance * WAVE_FREQUENCY) + 1) / 2;
+      return (Math.sin(time * WAVE_SPEED_PER_FRAME - distance * WAVE_FREQUENCY_PER_UNIT) + 1) / 2;
     }
 
     function drawDiamond(x, y, fill, stroke) {
@@ -450,12 +450,12 @@
         event.preventDefault();
         running = !running;
         document.getElementById("toggleButton").textContent = running ? "Pause" : "Resume";
+        updateReadout();
       } else if (event.key === "ArrowUp") {
         raiseSelected();
       } else if (event.key === "ArrowDown") {
         lowerSelected();
       }
-      updateReadout();
     });
 
     function animate() {
