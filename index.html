@@ -240,20 +240,25 @@
     const energyLabel = document.getElementById("energyLabel");
 
     const GRID_SIZE = 7;
+    const GRID_CENTER = Math.floor(GRID_SIZE / 2);
     const MAX_HEIGHT = 6;
+    const INITIAL_CORE_HEIGHT = 2;
     const TILE_W = 72;
     const TILE_H = 36;
     const BLOCK_H = 22;
-    const WAVE_SPEED_PER_FRAME = 0.045;
-    const WAVE_FREQUENCY_PER_UNIT = 0.9;
+    const WAVE_ANIMATION_SPEED = 0.045;
+    const WAVE_SPATIAL_FREQUENCY = 0.9;
     const ORIGIN_X = canvas.width / 2;
     const ORIGIN_Y = 152;
 
     const heights = Array.from({ length: GRID_SIZE }, (_, row) =>
-      Array.from({ length: GRID_SIZE }, (_, col) => (row === 3 && col === 3 ? 2 : 0)),
+      Array.from(
+        { length: GRID_SIZE },
+        (_, col) => (row === GRID_CENTER && col === GRID_CENTER ? INITIAL_CORE_HEIGHT : 0),
+      ),
     );
 
-    let selected = { row: 3, col: 3 };
+    let selected = { row: GRID_CENTER, col: GRID_CENTER };
     let running = true;
     let time = 0;
 
@@ -288,8 +293,8 @@
     }
 
     function waveEnergy(row, col) {
-      const distance = Math.hypot(row - 3, col - 3);
-      return (Math.sin(time * WAVE_SPEED_PER_FRAME - distance * WAVE_FREQUENCY_PER_UNIT) + 1) / 2;
+      const distance = Math.hypot(row - GRID_CENTER, col - GRID_CENTER);
+      return (Math.sin(time * WAVE_ANIMATION_SPEED - distance * WAVE_SPATIAL_FREQUENCY) + 1) / 2;
     }
 
     function drawDiamond(x, y, fill, stroke) {
@@ -404,10 +409,10 @@
     function resetField() {
       for (let row = 0; row < GRID_SIZE; row += 1) {
         for (let col = 0; col < GRID_SIZE; col += 1) {
-          heights[row][col] = row === 3 && col === 3 ? 2 : 0;
+          heights[row][col] = row === GRID_CENTER && col === GRID_CENTER ? INITIAL_CORE_HEIGHT : 0;
         }
       }
-      selected = { row: 3, col: 3 };
+      selected = { row: GRID_CENTER, col: GRID_CENTER };
       updateReadout();
       drawScene();
     }
